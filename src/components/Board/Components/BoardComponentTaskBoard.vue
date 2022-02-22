@@ -1,13 +1,18 @@
 <template>
   <section class="taskboard">
-    <article v-for="state in tasksForTaskBoard" :key="state">
-      <h3 :class="'taskboard__group-heading taskboard__group-heading' + state.class">
-        {{ state.stateName }}
+    <article v-for="category in categories" :key="category" @drop="onDrop($event, category.id)"
+    @dragover.prevent @dragenter.prevent>
+      <h3
+        :class="
+          'taskboard__group-heading taskboard__group-heading' + category.class
+        "
+      >
+        {{ category.title }}
       </h3>
-      <div class="taskboard__list" v-for="task in state.tasks" :key="task">
-        <div :class="'taskboard__item task task' + state.class">
+      <div class="taskboard__list" v-for="item in items.filter(x => x.categoryId === category.id)" :key="item" @dragstart="onDragStart($event, item)" draggable="true">
+        <div :class="'taskboard__item task task' + category.class">
           <div class="task__body">
-            <p class="task__view">{{ task }}</p>
+            <p class="task__view">{{ item.title }}</p>
             <input
               class="task__input"
               type="text"
@@ -21,7 +26,12 @@
           ></button>
         </div>
       </div>
-      <button v-if="state.stateName === 'Корзина'" class="taskboard__button button button--clear" type="button">
+
+      <button
+        v-if="category.title === 'Корзина'"
+        class="taskboard__button button button--clear"
+        type="button"
+      >
         <svg
           width="22"
           height="22"
@@ -53,7 +63,7 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 //  import boardComponentAddTask from './Components/BoardComponentAddTask.vue'
 export default defineComponent({
   props: {
@@ -61,10 +71,76 @@ export default defineComponent({
       type: Object,
       required: true
     }
+  },
+
+  setup () {
+    const items = ref([
+      {
+        id: 0,
+        title: '1 задача',
+        categoryId: 0
+      },
+      {
+        id: 1,
+        title: '2 задача',
+        categoryId: 1
+      },
+      {
+        id: 2,
+        title: '3 задача',
+        categoryId: 2
+      },
+      {
+        id: 3,
+        title: '4 задача',
+        categoryId: 3
+      }
+    ])
+
+    const categories = ref([
+      {
+        id: 0,
+        title: 'Бэклог',
+        class: '--backlog'
+      },
+      {
+        id: 1,
+        title: 'В процессе',
+        class: '--processing'
+      },
+      {
+        id: 2,
+        title: 'Готово',
+        class: '--done'
+      },
+      {
+        id: 3,
+        title: 'Корзина',
+        class: '--basket'
+      }
+    ])
+    function onDragStart (e, item) {
+      e.dataTransfer.dropEffect = 'move'
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('itemId', item.id.toString())
+    }
+    function onDrop (e, categoryId) {
+      const itemId = parseInt(e.dataTransfer.getData('itemId'))
+      items.value = items.value.map(x => {
+        if (x.id === itemId) {
+          x.categoryId = categoryId
+        }
+        return x
+      })
+    }
+
+    return {
+      items,
+      categories,
+      onDragStart,
+      onDrop
+    }
   }
-/*  components: {
-    boardComponentAddTask
-  } */
 })
 </script>
 
